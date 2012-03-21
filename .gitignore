@@ -1,0 +1,4 @@
+.directory
+*.py[co]
+__pycache__
+

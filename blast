@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+import shelve
+import argparse
+import re
+import sys
+from os import path
+from contextlib import closing
+
+
+DB_PATH = path.expanduser(path.join('~', '.blast.db'))
+
+def validate_key(key):
+    reg = r'[\w]+(\.[\w]+)?$'
+    if not re.match(reg, key):
+        print('Invalid key: `{0}`\n'.format(key) +
+                'Expected format: `<word1>[.<word2>]` ' +
+                'where words consist of letters, numbers and underscores')
+        sys.exit(1)
+
+### Commands ###
+def cmd_get(args):
+    with closing(shelve.open(DB_PATH)) as store:
+        entries = store.get('entries', {})
+        key = args.key
+        validate_key(key)
+        if key in entries:
+            print(entries[key])
+        else:
+            print('Key not found!')
+
+def cmd_set(args):
+    with closing(shelve.open(DB_PATH)) as store:
+        entries = store.get('entries', {})
+        key = args.key
+        validate_key(key)
+        value = args.value
+        if value is None:
+            value = sys.stdin.read()
+        entries[key] = value
+        store['entries'] = entries
+
+def cmd_delete(args):
+    with closing(shelve.open(DB_PATH)) as store:
+        entries = store.get('entries', {})
+        key = args.key
+        validate_key(key)
+        if key in entries:
+            del entries[key]
+            store['entries'] = entries
+        else:
+            print('Key not found!')
+
+def cmd_list(args):
+    with closing(shelve.open(DB_PATH)) as store:
+        entries = store.get('entries', {})
+        if len(entries) == 0:
+            print('There are no entries!')
+            return
+        key = args.key
+        if key is not None:
+            validate_key(key)
+            matching_entries = (name for name in entries if name.startswith(key))
+            print('\n'.join(matching_entries))
+        else:
+            print('\n'.join(entries))
+###^ Commands ^###
+
+def main():
+    parser = argparse.ArgumentParser(prog='blast', 
+                                    description='Your command line key-value store')
+    subparsers = parser.add_subparsers(help='Sub-commands')
+
+    get_parser = subparsers.add_parser('get', help='get help', description='Get value')
+    get_parser.add_argument('key')
+    get_parser.set_defaults(func=cmd_get)
+
+    set_parser = subparsers.add_parser('set', help='set help')
+    set_parser.add_argument('key')
+    set_parser.add_argument('value', nargs='?')
+    set_parser.set_defaults(func=cmd_set)
+
+    delete_parser = subparsers.add_parser('delete', help='delete help')
+    delete_parser.add_argument('key')
+    delete_parser.set_defaults(func=cmd_delete)
+
+    list_parser = subparsers.add_parser('list', help='list help')
+    list_parser.add_argument('key', nargs='?')
+    list_parser.set_defaults(func=cmd_list)
+
+    args = parser.parse_args()
+    args.func(args)
+
+if __name__ == '__main__':
+    main()
