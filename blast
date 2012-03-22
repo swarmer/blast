@@ -5,10 +5,44 @@ import argparse
 import re
 import sys
 from os import path
-from contextlib import closing
 
 
-DB_PATH = path.expanduser(path.join('~', '.blast.db'))
+class Store:
+    DB_PATH = path.expanduser(path.join('~', '.blast.db'))
+
+    def __init__(self, path=None):
+        if path is None:
+            self.db_path = self.DB_PATH
+        else:
+            self.db_path = path
+
+    def __getitem__(self, key):
+        return self.entries[key]
+
+    def __setitem__(self, key, value):
+        self.entries[key] = value
+
+    def __delitem__(self, key):
+        del self.entries[key]
+
+    def __iter__(self):
+        return iter(self.entries)
+
+    def __len__(self):
+        return len(self.entries)
+
+    def __contains__(self, item):
+        return item in self.entries
+
+    def __enter__(self):
+        self.shelve = shelve.open(self.db_path)
+        self.entries = self.shelve.get('entries', {})
+        return self
+
+    def __exit__(self, *_):
+        self.shelve['entries'] = self.entries
+        self.shelve.close()
+
 
 def validate_key(key):
     reg = r'[\w]+(\.[\w]+)?$'
@@ -20,50 +54,44 @@ def validate_key(key):
 
 ### Commands ###
 def cmd_get(args):
-    with closing(shelve.open(DB_PATH)) as store:
-        entries = store.get('entries', {})
+    with Store() as store:
         key = args.key
         validate_key(key)
-        if key in entries:
-            print(entries[key])
-        else:
+        try:
+            print(store[key])
+        except KeyError:
             print('Key not found!')
 
 def cmd_set(args):
-    with closing(shelve.open(DB_PATH)) as store:
-        entries = store.get('entries', {})
+    with Store() as store:
         key = args.key
         validate_key(key)
         value = args.value
         if value is None:
             value = sys.stdin.read()
-        entries[key] = value
-        store['entries'] = entries
+        store[key] = value
 
 def cmd_delete(args):
-    with closing(shelve.open(DB_PATH)) as store:
-        entries = store.get('entries', {})
+    with Store() as store:
         key = args.key
         validate_key(key)
-        if key in entries:
-            del entries[key]
-            store['entries'] = entries
-        else:
+        try:
+            del store[key]
+        except KeyError:
             print('Key not found!')
 
 def cmd_list(args):
-    with closing(shelve.open(DB_PATH)) as store:
-        entries = store.get('entries', {})
-        if len(entries) == 0:
+    with Store() as store:
+        if len(store) == 0:
             print('There are no entries!')
             return
         key = args.key
         if key is not None:
             validate_key(key)
-            matching_entries = (name for name in entries if name.startswith(key))
+            matching_entries = (name for name in store if name.startswith(key))
             print('\n'.join(matching_entries))
         else:
-            print('\n'.join(entries))
+            print('\n'.join(store))
 ###^ Commands ^###
 
 def main():
