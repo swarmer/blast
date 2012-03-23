@@ -15,6 +15,12 @@ class Store:
             self.db_path = self.DB_PATH
         else:
             self.db_path = path
+        self.shelve = shelve.open(self.db_path)
+        self.entries = self.shelve.get('entries', {})
+
+    def close(self):
+        self.shelve['entries'] = self.entries
+        self.shelve.close()
 
     def __getitem__(self, key):
         return self.entries[key]
@@ -35,13 +41,11 @@ class Store:
         return item in self.entries
 
     def __enter__(self):
-        self.shelve = shelve.open(self.db_path)
-        self.entries = self.shelve.get('entries', {})
         return self
 
     def __exit__(self, *_):
-        self.shelve['entries'] = self.entries
-        self.shelve.close()
+        self.close()
+        return False
 
 
 def validate_key(key):

@@ -7,7 +7,7 @@ blast.Store.DB_PATH = TMP_FILE
 
 class TestStore(unittest.TestCase):
     def setUp(self):
-        self.store = blast.Store().__enter__()
+        self.store = blast.Store()
 
     def test_dict(self):
         store = self.store
@@ -52,5 +52,5 @@ class TestStore(unittest.TestCase):
         self.assertEqual(set(store), set())
 
     def tearDown(self):
-        self.store.__exit__(None, None, None)
+        self.store.close()
         os.remove(TMP_FILE)
