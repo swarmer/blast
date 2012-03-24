@@ -4,8 +4,22 @@ import shelve
 import argparse
 import re
 import sys
+import subprocess
 from os import path
 from functools import wraps
+
+
+class Platform:
+    if 'win32' in sys.platform or 'cygwin' in sys.platform:
+        OPEN_COMMAND = 'start'
+    elif 'darwin' in sys.platform:
+        OPEN_COMMAND = 'open'
+    else:
+        OPEN_COMMAND = 'xdg-open'
+
+    @classmethod
+    def open(cls, url):
+        subprocess.call([cls.OPEN_COMMAND, url])
 
 
 class Blast:
@@ -25,7 +39,10 @@ class Blast:
         def wrapper(self, args):
             if args.key is not None:
                 self.validate_key(args.key)
-            func(self, args)
+            try:
+                func(self, args)
+            except KeyError:
+                print('Error: Key not found!')
         return wrapper
 
     @staticmethod
@@ -59,10 +76,7 @@ class Blast:
     @validating_key
     def cmd_get(self, args):
         key = args.key
-        try:
-            print(self[key])
-        except KeyError:
-            print('Error: Key not found!')
+        print(self[key])
 
     @validating_key
     def cmd_set(self, args):
@@ -75,10 +89,7 @@ class Blast:
     @validating_key
     def cmd_delete(self, args):
         key = args.key
-        try:
-            del self[key]
-        except KeyError:
-            print('Error: Key not found!')
+        del self[key]
 
     @validating_key
     def cmd_clear(self, args):
@@ -93,6 +104,12 @@ class Blast:
             print('There are no entries!')
             return
         print('\n'.join(entries))
+
+    @validating_key
+    def cmd_open(self, args):
+        key = args.key
+        val = self[key]
+        Platform.open(val)
     ###^ Commands ^###
 
     ### Container interface ###
@@ -174,6 +191,12 @@ def main(args=None):
                                     '"namespace".')
         clear_parser.add_argument('key', nargs='?')
         clear_parser.set_defaults(func=blast.cmd_clear)
+
+        # open
+        open_parser = subparsers.add_parser('open', help='open the url in entry',
+                        description='Open filepath or URL stored in the entry specified by key')
+        open_parser.add_argument('key', nargs='?')
+        open_parser.set_defaults(func=blast.cmd_open)
 
         args = parser.parse_args(args)
         args.func(args)

@@ -251,6 +251,18 @@ class TestOutput(unittest.TestCase):
         self.assertEqual(self.fake_stdout.getvalue(), 'a\nb\n')
         self.set_fake_buffer()
 
+    def test_open(self):
+        val = None
+        def fake_open(url):
+            nonlocal val
+            val = url
+        blast.Platform.open = fake_open
+
+        b = self.blast
+        b.cmd_set(self.mk_fake(key='a', value='42'))
+        b.cmd_open(self.mk_fake(key='a'))
+        self.assertEqual(val, '42')
+
     def test_validation(self):
         blast = self.blast
 
@@ -304,3 +316,14 @@ class TestMain(unittest.TestCase):
         blast.main(['clear'])
         blast.main(['list'])
         self.assertIn('no entries', self.fake_stdout.getvalue())
+
+    def test_open(self):
+        val = None
+        def fake_open(url):
+            nonlocal val
+            val = url
+        blast.Platform.open = fake_open
+
+        blast.main(['set', 'a', '42'])
+        blast.main(['open', 'a'])
+        self.assertEqual(val, '42')
