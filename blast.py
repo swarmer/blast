@@ -24,8 +24,12 @@ class Blast:
         reg = r'[\w]+(\.[\w]+)?$'
         return re.match(reg, key)
 
-    def clear(self):
-        self.entries.clear()
+    def clear(self, key=None):
+        if key is None:
+            self.entries.clear()
+        else:
+            self.entries = {k: v for k, v in self.entries.items()
+                                if not k.startswith(key + '.')}
 
     def get_list(self, key=None):
         if key is not None:
@@ -66,6 +70,12 @@ class Blast:
             del self[key]
         except KeyError:
             print('Error: Key not found!')
+
+    def cmd_clear(self, args):
+        key = args.key
+        if key is not None:
+            self.validate_key(key)
+        self.clear(key)
 
     def cmd_list(self, args):
         key = args.key
@@ -126,26 +136,37 @@ def main(args=None):
                                         description='Your command line key-value store')
         subparsers = parser.add_subparsers(help='Sub-commands')
 
+        # get
         get_parser = subparsers.add_parser('get', help='get value', description='Get value by key')
         get_parser.add_argument('key')
         get_parser.set_defaults(func=blast.cmd_get)
 
+        # set
         set_parser = subparsers.add_parser('set', help='set value',
                         description='Set the value at key. If the value is not passed, read it from stdin.')
         set_parser.add_argument('key')
         set_parser.add_argument('value', nargs='?')
         set_parser.set_defaults(func=blast.cmd_set)
 
+        # delete
         delete_parser = subparsers.add_parser('delete', help='delete value',
                             description='Delete the value at key')
         delete_parser.add_argument('key')
         delete_parser.set_defaults(func=blast.cmd_delete)
 
+        # list
         list_parser = subparsers.add_parser('list', help='list the keys',
                         description='List all the keys. If the key is passed, list only keys in that '
                                     '"namespace".')
         list_parser.add_argument('key', nargs='?')
         list_parser.set_defaults(func=blast.cmd_list)
+
+        # clear
+        clear_parser = subparsers.add_parser('clear', help='clear the entries',
+                        description='Clears all the entries. If the key is passed, removes only keys in that '
+                                    '"namespace".')
+        clear_parser.add_argument('key', nargs='?')
+        clear_parser.set_defaults(func=blast.cmd_clear)
 
         args = parser.parse_args(args)
         args.func(args)

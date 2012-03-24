@@ -2,8 +2,10 @@ import unittest
 import os
 import sys
 import io
+import contextlib
 
 import blast
+
 
 TMP_FILE = '__test_tempfile'
 def cleanup():
@@ -11,6 +13,7 @@ def cleanup():
         os.remove(TMP_FILE)
     except OSError:
         pass
+
 
 class TestBlast(unittest.TestCase):
     def setUp(self):
@@ -75,6 +78,23 @@ class TestBlast(unittest.TestCase):
         self.assertEqual(blast.get_list(), [])
         self.assertEqual(blast.get_list('a'), [])
         self.assertEqual(blast.get_list('a.b'), [])
+
+    def test_clear(self):
+        blast = self.blast
+
+        blast['a'] = '0'
+        blast['b'] = '0'
+        blast['k.a'] = '0'
+        blast['k.b'] = '0'
+        blast.clear()
+        self.assertEqual(len(blast), 0)
+
+        blast['a'] = '0'
+        blast['b'] = '0'
+        blast['k.a'] = '0'
+        blast['k.b'] = '0'
+        blast.clear(key='k')
+        self.assertEqual(set(blast), {'a', 'b'})
 
     def test_validation(self):
         blast = self.blast
@@ -210,6 +230,27 @@ class TestOutput(unittest.TestCase):
         self.assertIn('no entries', self.fake_stdout.getvalue())
         self.set_fake_buffer()
 
+    def test_clear(self):
+        blast = self.blast
+
+        blast.cmd_set(self.mk_fake(key='a', value='42'))
+        blast.cmd_set(self.mk_fake(key='b', value='42'))
+        blast.cmd_set(self.mk_fake(key='k.v', value='42'))
+        blast.cmd_clear(self.mk_fake(key=None))
+        blast.cmd_list(self.mk_fake(key=None))
+        self.assertIn('no entries', self.fake_stdout.getvalue())
+        self.set_fake_buffer()
+
+        blast.cmd_set(self.mk_fake(key='a', value='42'))
+        blast.cmd_set(self.mk_fake(key='b', value='42'))
+        blast.cmd_set(self.mk_fake(key='k.a', value='42'))
+        blast.cmd_set(self.mk_fake(key='k.b', value='42'))
+        blast.cmd_set(self.mk_fake(key='k.c', value='42'))
+        blast.cmd_clear(self.mk_fake(key='k'))
+        blast.cmd_list(self.mk_fake(key=None))
+        self.assertEqual(self.fake_stdout.getvalue(), 'a\nb\n')
+        self.set_fake_buffer()
+
     def test_validation(self):
         blast = self.blast
 
@@ -218,18 +259,25 @@ class TestOutput(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
+    class OMNOMNOM:
+        def write(self, _):
+            pass
+
     def set_fake_buffer(self):
         self.fake_stdout = io.StringIO()
         sys.stdout = self.fake_stdout
 
     def setUp(self):
         self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        sys.stderr = self.OMNOMNOM()
         self.set_fake_buffer()
         self.old_db_path = blast.Blast.DEFAULT_DB_PATH
         blast.Blast.DEFAULT_DB_PATH = TMP_FILE
 
     def tearDown(self):
         sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
         self.fake_stdout.close()
         blast.Blast.DEFAULT_DB_PATH = self.old_db_path
         cleanup()
@@ -250,3 +298,9 @@ class TestMain(unittest.TestCase):
         blast.main(['set', 'k.b', '42'])
         blast.main(['list'])
         self.assertEqual(self.fake_stdout.getvalue(), 'a\nk.b\n')
+
+    def test_clear(self):
+        blast.main(['set', 'a', '42'])
+        blast.main(['clear'])
+        blast.main(['list'])
+        self.assertIn('no entries', self.fake_stdout.getvalue())
