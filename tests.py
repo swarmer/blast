@@ -8,12 +8,16 @@ import blast
 
 
 TMP_FILE = '__test_tempfile'
+
+def setUpModule():
+    blast.Platform.open = lambda _: None
+    blast.Platform.copy_to_clipboard = lambda _: None
+
 def cleanup():
     try:
         os.remove(TMP_FILE)
     except OSError:
         pass
-
 
 class TestBlast(unittest.TestCase):
     def setUp(self):
@@ -134,6 +138,13 @@ class TestOutput(unittest.TestCase):
         self.old_stdout = sys.stdout
         self.set_fake_buffer()
 
+        self.val = None
+        def fake_open(url):
+            nonlocal self
+            self.val = url
+        blast.Platform.open = fake_open
+        blast.Platform.copy_to_clipboard = fake_open
+
     def tearDown(self):
         sys.stdout = self.old_stdout
         self.fake_stdout.close()
@@ -251,18 +262,6 @@ class TestOutput(unittest.TestCase):
         self.assertEqual(self.fake_stdout.getvalue(), 'a\nb\n')
         self.set_fake_buffer()
 
-    def test_open(self):
-        val = None
-        def fake_open(url):
-            nonlocal val
-            val = url
-        blast.Platform.open = fake_open
-
-        b = self.blast
-        b.cmd_set(self.mk_fake(key='a', value='42'))
-        b.cmd_open(self.mk_fake(key='a'))
-        self.assertEqual(val, '42')
-
     def test_validation(self):
         blast = self.blast
 
@@ -292,8 +291,8 @@ class TestMain(unittest.TestCase):
         def fake_open(url):
             nonlocal self
             self.val = url
-        self.old_open = blast.Platform.open
         blast.Platform.open = fake_open
+        blast.Platform.copy_to_clipboard = fake_open
 
     def tearDown(self):
         sys.stdout = self.old_stdout
@@ -301,10 +300,7 @@ class TestMain(unittest.TestCase):
         self.fake_stdout.close()
 
         blast.Blast.DEFAULT_DB_PATH = self.old_db_path
-
         cleanup()
-
-        blast.Platform.open = self.old_open
 
     def test_get(self):
         blast.main(['set', 'a', '42'])
@@ -332,4 +328,9 @@ class TestMain(unittest.TestCase):
     def test_open(self):
         blast.main(['set', 'a', '42'])
         blast.main(['open', 'a'])
+        self.assertEqual(self.val, '42')
+
+    def test_clip(self):
+        blast.main(['set', 'a', '42'])
+        blast.main(['get', 'a'])
         self.assertEqual(self.val, '42')

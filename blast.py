@@ -12,14 +12,22 @@ from functools import wraps
 class Platform:
     if 'win32' in sys.platform or 'cygwin' in sys.platform:
         OPEN_COMMAND = 'start'
+        CLIP_ARGS = ['clip']
     elif 'darwin' in sys.platform:
         OPEN_COMMAND = 'open'
+        CLIP_ARGS = ['pbcopy']
     else:
         OPEN_COMMAND = 'xdg-open'
+        CLIP_ARGS = ['xclip', '-selection', 'clipboard']
 
     @classmethod
     def open(cls, url):
         subprocess.call([cls.OPEN_COMMAND, url])
+
+    @classmethod
+    def copy_to_clipboard(cls, text):
+        with subprocess.Popen(cls.CLIP_ARGS, stdin=subprocess.PIPE) as process:
+            process.communicate(input=text.encode())
 
 
 class Blast:
@@ -76,7 +84,9 @@ class Blast:
     @validating_key
     def cmd_get(self, args):
         key = args.key
-        print(self[key])
+        val = self[key]
+        Platform.copy_to_clipboard(val)
+        print(val)
 
     @validating_key
     def cmd_set(self, args):
