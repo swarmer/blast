@@ -284,15 +284,27 @@ class TestMain(unittest.TestCase):
         self.old_stderr = sys.stderr
         sys.stderr = self.OMNOMNOM()
         self.set_fake_buffer()
+
         self.old_db_path = blast.Blast.DEFAULT_DB_PATH
         blast.Blast.DEFAULT_DB_PATH = TMP_FILE
+
+        self.val = None
+        def fake_open(url):
+            nonlocal self
+            self.val = url
+        self.old_open = blast.Platform.open
+        blast.Platform.open = fake_open
 
     def tearDown(self):
         sys.stdout = self.old_stdout
         sys.stderr = self.old_stderr
         self.fake_stdout.close()
+
         blast.Blast.DEFAULT_DB_PATH = self.old_db_path
+
         cleanup()
+
+        blast.Platform.open = self.old_open
 
     def test_get(self):
         blast.main(['set', 'a', '42'])
@@ -318,12 +330,6 @@ class TestMain(unittest.TestCase):
         self.assertIn('no entries', self.fake_stdout.getvalue())
 
     def test_open(self):
-        val = None
-        def fake_open(url):
-            nonlocal val
-            val = url
-        blast.Platform.open = fake_open
-
         blast.main(['set', 'a', '42'])
         blast.main(['open', 'a'])
-        self.assertEqual(val, '42')
+        self.assertEqual(self.val, '42')
