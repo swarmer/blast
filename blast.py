@@ -5,6 +5,7 @@ import argparse
 import re
 import sys
 from os import path
+from functools import wraps
 
 
 class Blast:
@@ -18,6 +19,14 @@ class Blast:
         self.shelve = shelve.open(self.db_path)
         self.entries = self.shelve.get('entries', {})
         self.opened = True
+
+    def validating_key(func):
+        @wraps(func)
+        def wrapper(self, args):
+            if args.key is not None:
+                self.validate_key(args.key)
+            func(self, args)
+        return wrapper
 
     @staticmethod
     def is_valid_key(key):
@@ -47,40 +56,38 @@ class Blast:
             sys.exit(1)
 
     ### Commands ###
+    @validating_key
     def cmd_get(self, args):
         key = args.key
-        self.validate_key(key)
         try:
             print(self[key])
         except KeyError:
             print('Error: Key not found!')
 
+    @validating_key
     def cmd_set(self, args):
         key = args.key
-        self.validate_key(key)
         value = args.value
         if value is None:
             value = sys.stdin.read()
         self[key] = value
 
+    @validating_key
     def cmd_delete(self, args):
         key = args.key
-        self.validate_key(key)
         try:
             del self[key]
         except KeyError:
             print('Error: Key not found!')
 
+    @validating_key
     def cmd_clear(self, args):
         key = args.key
-        if key is not None:
-            self.validate_key(key)
         self.clear(key)
 
+    @validating_key
     def cmd_list(self, args):
         key = args.key
-        if key is not None:
-            self.validate_key(key)
         entries = self.get_list(key)
         if not entries:
             print('There are no entries!')
