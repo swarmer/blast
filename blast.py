@@ -126,20 +126,24 @@ def main(args=None):
                                         description='Your command line key-value store')
         subparsers = parser.add_subparsers(help='Sub-commands')
 
-        get_parser = subparsers.add_parser('get', help='get help', description='Get value')
+        get_parser = subparsers.add_parser('get', help='get value', description='Get value by key')
         get_parser.add_argument('key')
         get_parser.set_defaults(func=blast.cmd_get)
 
-        set_parser = subparsers.add_parser('set', help='set help')
+        set_parser = subparsers.add_parser('set', help='set value',
+                        description='Set the value at key. If the value is not passed, read it from stdin.')
         set_parser.add_argument('key')
         set_parser.add_argument('value', nargs='?')
         set_parser.set_defaults(func=blast.cmd_set)
 
-        delete_parser = subparsers.add_parser('delete', help='delete help')
+        delete_parser = subparsers.add_parser('delete', help='delete value',
+                            description='Delete the value at key')
         delete_parser.add_argument('key')
         delete_parser.set_defaults(func=blast.cmd_delete)
 
-        list_parser = subparsers.add_parser('list', help='list help')
+        list_parser = subparsers.add_parser('list', help='list the keys',
+                        description='List all the keys. If the key is passed, list only keys in that '
+                                    '"namespace".')
         list_parser.add_argument('key', nargs='?')
         list_parser.set_defaults(func=blast.cmd_list)
 
