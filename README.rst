@@ -26,6 +26,7 @@ The commands are:
 - delete
 - list
 - clear
+- open
 
 See '`blast --help`' or '`blast <command> --help`' for info.
 
