@@ -155,38 +155,38 @@ class TestOutput(unittest.TestCase):
         blast = self.blast
 
         blast.cmd_set(self.mk_fake(key='a', value='42'))
-        blast.cmd_get(self.mk_fake(key='a'))
+        blast.cmd_echo(self.mk_fake(key='a'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
         blast.cmd_set(self.mk_fake(key='b.c', value='42'))
-        blast.cmd_get(self.mk_fake(key='b.c'))
+        blast.cmd_echo(self.mk_fake(key='b.c'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
-        blast.cmd_get(self.mk_fake(key='nonexistent'))
+        blast.cmd_echo(self.mk_fake(key='nonexistent'))
         self.assertIn('Error', self.fake_stdout.getvalue())
 
     def test_delete(self):
         blast = self.blast
 
         blast.cmd_set(self.mk_fake(key='a', value='42'))
-        blast.cmd_get(self.mk_fake(key='a'))
+        blast.cmd_echo(self.mk_fake(key='a'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
         blast.cmd_delete(self.mk_fake(key='a'))
-        blast.cmd_get(self.mk_fake(key='a'))
+        blast.cmd_echo(self.mk_fake(key='a'))
         self.assertIn('Error', self.fake_stdout.getvalue())
         self.set_fake_buffer()
 
         blast.cmd_set(self.mk_fake(key='b.c', value='42'))
         blast.cmd_set(self.mk_fake(key='a', value='42'))
-        blast.cmd_get(self.mk_fake(key='b.c'))
+        blast.cmd_echo(self.mk_fake(key='b.c'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
-        blast.cmd_get(self.mk_fake(key='a'))
+        blast.cmd_echo(self.mk_fake(key='a'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
@@ -195,12 +195,12 @@ class TestOutput(unittest.TestCase):
         self.set_fake_buffer()
 
         blast.cmd_delete(self.mk_fake(key='a'))
-        blast.cmd_get(self.mk_fake(key='b.c'))
+        blast.cmd_echo(self.mk_fake(key='b.c'))
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
         self.set_fake_buffer()
 
         blast.cmd_delete(self.mk_fake(key='b.c'))
-        blast.cmd_get(self.mk_fake(key='b.c'))
+        blast.cmd_echo(self.mk_fake(key='b.c'))
         self.assertIn('Error', self.fake_stdout.getvalue())
         self.set_fake_buffer()
 
@@ -302,15 +302,15 @@ class TestMain(unittest.TestCase):
         blast.Blast.DEFAULT_DB_PATH = self.old_db_path
         cleanup()
 
-    def test_get(self):
+    def test_echo(self):
         blast.main(['set', 'a', '42'])
-        blast.main(['get', 'a'])
+        blast.main(['echo', 'a'])
         self.assertEqual(self.fake_stdout.getvalue(), '42\n')
 
     def test_delete(self):
         blast.main(['set', 'a', '42'])
         blast.main(['delete', 'a'])
-        blast.main(['get', 'a'])
+        blast.main(['echo', 'a'])
         self.assertIn('Error', self.fake_stdout.getvalue())
 
     def test_list(self):

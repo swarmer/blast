@@ -120,6 +120,11 @@ class Blast:
         key = args.key
         val = self[key]
         Platform.open(val)
+
+    @validating_key
+    def cmd_echo(self, args):
+        key = args.key
+        print(self[key])
     ###^ Commands ^###
 
     ### Container interface ###
@@ -207,6 +212,12 @@ def main(args=None):
                         description='Open filepath or URL stored in the entry specified by key')
         open_parser.add_argument('key', nargs='?')
         open_parser.set_defaults(func=blast.cmd_open)
+
+        # echo
+        echo_parser = subparsers.add_parser('echo', help='echo value',
+                        description='Print value of key without copying it to clipboard')
+        echo_parser.add_argument('key')
+        echo_parser.set_defaults(func=blast.cmd_echo)
 
         args = parser.parse_args(args)
         args.func(args)
