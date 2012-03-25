@@ -125,6 +125,14 @@ class Blast:
     def cmd_echo(self, args):
         key = args.key
         print(self[key])
+
+    def cmd_move(self, args):
+        key = args.key
+        dest = args.dest
+        self.validate_key(key)
+        self.validate_key(dest)
+        self[dest] = self[key]
+        del self[key]
     ###^ Commands ^###
 
     ### Container interface ###
@@ -218,6 +226,13 @@ def main(args=None):
                         description='Print value of key without copying it to clipboard')
         echo_parser.add_argument('key')
         echo_parser.set_defaults(func=blast.cmd_echo)
+
+        # move
+        move_parser = subparsers.add_parser('move', help='move value',
+                        description='move value from key to dest')
+        move_parser.add_argument('key')
+        move_parser.add_argument('dest')
+        move_parser.set_defaults(func=blast.cmd_move)
 
         args = parser.parse_args(args)
         args.func(args)

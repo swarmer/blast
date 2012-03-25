@@ -24,6 +24,7 @@ The commands are:
 - get
 - set
 - delete
+- move
 - list
 - clear
 - open

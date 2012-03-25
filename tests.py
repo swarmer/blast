@@ -262,6 +262,15 @@ class TestOutput(unittest.TestCase):
         self.assertEqual(self.fake_stdout.getvalue(), 'a\nb\n')
         self.set_fake_buffer()
 
+    def test_move(self):
+        blast = self.blast
+
+        blast.cmd_set(self.mk_fake(key='a', value='42'))
+        blast.cmd_move(self.mk_fake(key='a', dest='b'))
+        blast.cmd_list(self.mk_fake(key=None))
+        self.assertEqual(self.fake_stdout.getvalue(), 'b\n')
+        self.set_fake_buffer()
+
     def test_validation(self):
         blast = self.blast
 
@@ -334,3 +343,12 @@ class TestMain(unittest.TestCase):
         blast.main(['set', 'a', '42'])
         blast.main(['get', 'a'])
         self.assertEqual(self.val, '42')
+
+    def test_move(self):
+        blast.main(['set', 'a', '42'])
+        blast.main(['move', 'a', 'b'])
+        blast.main(['get', 'b'])
+        self.assertEqual(self.fake_stdout.getvalue(), '42\n')
+        self.set_fake_buffer()
+        blast.main(['get', 'a'])
+        self.assertIn('Error', self.fake_stdout.getvalue())
