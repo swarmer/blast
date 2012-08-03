@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import shelve
 import argparse
 import re
 import sys
 import subprocess
 from os import path
 from functools import wraps
+
+from fridge import Fridge
 
 
 class Platform:
@@ -31,16 +32,15 @@ class Platform:
 
 
 class Blast:
-    DEFAULT_DB_PATH = path.expanduser(path.join('~', '.blast.db'))
+    DEFAULT_DB_PATH = path.expanduser(path.join('~', '.blast_db.json'))
 
     def __init__(self, path=None):
         if path is None:
             self.db_path = self.DEFAULT_DB_PATH
         else:
             self.db_path = path
-        self.shelve = shelve.open(self.db_path)
-        self.entries = self.shelve.get('entries', {})
-        self.opened = True
+        self.entries = Fridge(self.db_path)
+        self.closed = False
 
     def validating_key(func):
         @wraps(func)
@@ -59,11 +59,13 @@ class Blast:
         return re.match(reg, key)
 
     def clear(self, key=None):
-        if key is None:
-            self.entries.clear()
+        if key is not None:
+            new_entries = {k: v for k, v in self.entries.items()
+                            if not k.startswith(key + '.')}
         else:
-            self.entries = {k: v for k, v in self.entries.items()
-                                if not k.startswith(key + '.')}
+            new_entries = {}
+        self.entries.clear()
+        self.entries.update(new_entries)
 
     def get_list(self, key=None):
         if key is not None:
@@ -157,21 +159,18 @@ class Blast:
 
     ### Resource management ###
     def close(self):
-        self.shelve['entries'] = self.entries
-        self.shelve.close()
-        self.opened = False
+        self.entries.close()
+        self.closed = False
 
     def __enter__(self):
         return self
 
     def __exit__(self, *_):
-        if self.opened:
-            self.close()
+        self.close()
         return False
 
     def __del__(self):
-        if self.opened:
-            self.close()
+        self.close()
     ###^ Resource management ^###
 
 
