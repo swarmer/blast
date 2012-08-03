@@ -87,7 +87,6 @@ class Blast:
     def cmd_get(self, args):
         key = args.key
         val = self[key]
-        Platform.copy_to_clipboard(val)
         print(val)
 
     @validating_key
@@ -124,9 +123,11 @@ class Blast:
         Platform.open(val)
 
     @validating_key
-    def cmd_echo(self, args):
+    def cmd_copy(self, args):
         key = args.key
-        print(self[key])
+        val = self[key]
+        Platform.copy_to_clipboard(val)
+        print(val)
 
     def cmd_move(self, args):
         key = args.key
@@ -220,11 +221,11 @@ def main(args=None):
         open_parser.add_argument('key', nargs='?')
         open_parser.set_defaults(func=blast.cmd_open)
 
-        # echo
-        echo_parser = subparsers.add_parser('echo', help='echo value',
-                        description='Print value of key without copying it to clipboard')
-        echo_parser.add_argument('key')
-        echo_parser.set_defaults(func=blast.cmd_echo)
+        # copy
+        copy_parser = subparsers.add_parser('copy', help='copy value',
+                        description='Print the value at the key and copy it to the clipboard.')
+        copy_parser.add_argument('key')
+        copy_parser.set_defaults(func=blast.cmd_copy)
 
         # move
         move_parser = subparsers.add_parser('move', help='move value',

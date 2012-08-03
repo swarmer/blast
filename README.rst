@@ -43,7 +43,7 @@ The commands are:
 - list
 - clear
 - open
-- echo
+- copy
 
 See ``blast --help`` or ``blast <command> --help`` for info.
 
