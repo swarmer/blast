@@ -1,16 +1,16 @@
 #####
 Blast
 #####
-
 Blast is your own command-line key-value store.
 It is my reinterpretation of holman/boom.
 
 The main usage is basically storing text snippets and links.
 
+
 Installation
 ============
-
 Drop `blast.py` somewhere in your `PATH`.
+
 
 Example
 =======
@@ -31,9 +31,9 @@ Example
   $ blast list
   a
 
+
 Commands
 ========
-
 The commands are:
 
 - get
@@ -47,11 +47,11 @@ The commands are:
 
 See ``blast --help`` or ``blast <command> --help`` for info.
 
+
 Dependencies
 ============
 Python 3.
 
-Nose if you want to run ``nosetests``
 
 License
 =======
