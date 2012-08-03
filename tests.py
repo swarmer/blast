@@ -38,10 +38,6 @@ class TestBlast(unittest.TestCase):
         blast['b'] = s
         self.assertEqual(blast['b'], s)
 
-        v = [1, 2, None, 'Bacon', {42, 666}, ('Tuples!', ('Of Tuples!', 'of size 2'))]
-        blast['c'] = v
-        self.assertEqual(blast['c'], v)
-
     def test_iter(self):
         blast = self.blast
 
