@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import re
@@ -179,7 +179,7 @@ class Blast:
 
 def main(args=None):
     with Blast() as blast:
-        parser = argparse.ArgumentParser(prog='blast', 
+        parser = argparse.ArgumentParser(prog='blast',
                                         description='Your command line key-value store')
         subparsers = parser.add_subparsers(help='Sub-commands')
 
@@ -235,7 +235,11 @@ def main(args=None):
         move_parser.set_defaults(func=blast.cmd_move)
 
         args = parser.parse_args(args)
-        args.func(args)
+        try:
+            args.func(args)
+        except AttributeError:
+            parser.print_help()
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()

@@ -124,7 +124,7 @@ class TestOutput(unittest.TestCase):
         f = FakeArgs()
         f.__dict__ = dct
         return f
-    
+
     def set_fake_buffer(self):
         self.fake_stdout = io.StringIO()
         sys.stdout = self.fake_stdout
@@ -209,11 +209,11 @@ class TestOutput(unittest.TestCase):
         blast.cmd_set(self.mk_fake(key='k.b', value='42'))
         blast.cmd_set(self.mk_fake(key='k2.a', value='42'))
         blast.cmd_list(self.mk_fake(key=None))
-        self.assertEquals(self.fake_stdout.getvalue(), 'a\nb\nk.a\nk.b\nk2.a\n')
+        self.assertEqual(self.fake_stdout.getvalue(), 'a\nb\nk.a\nk.b\nk2.a\n')
         self.set_fake_buffer()
 
         blast.cmd_list(self.mk_fake(key='k'))
-        self.assertEquals(self.fake_stdout.getvalue(), 'k.a\nk.b\n')
+        self.assertEqual(self.fake_stdout.getvalue(), 'k.a\nk.b\n')
         self.set_fake_buffer()
 
         blast.cmd_list(self.mk_fake(key='k.a'))
